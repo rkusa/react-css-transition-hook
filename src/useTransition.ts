@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 
 /**
  * Options of the {@link useTransition} hook.
@@ -55,7 +55,7 @@ export default function useTransition(
     actualState ? opts.entered : undefined
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // entering
     if (!state && actualState) {
       setState(true);
