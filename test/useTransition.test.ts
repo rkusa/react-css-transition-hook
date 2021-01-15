@@ -1,7 +1,7 @@
+import { TransitionEvent } from "react";
 import { renderHook, act } from "@testing-library/react-hooks";
 import { useTransition } from "../src";
-
-jest.useFakeTimers();
+import { TransitionProps } from "../src/useTransition";
 
 describe("useTransition", () => {
   test("enter transition", () => {
@@ -16,36 +16,27 @@ describe("useTransition", () => {
       { initialProps: false }
     );
 
-    // start add being exited
+    // start at being exited
     expect(result.current[0]).toEqual(false);
-    expect(result.current[1]).toEqual("");
+    expect(result.current[1].className).toEqual("");
 
     // kick off the enter transition by changing the state to `true`
     rerender(true);
 
-    // the state will change right away
+    // the state will change right away as well as the classname which changes to `entering`
+    // and immediately afterwards to `entered`
+    const previous = result.all[result.all.length - 2] as [boolean, TransitionProps];
+    expect(previous[0]).toEqual(true);
+    expect(previous[1].className).toEqual("entering");
     expect(result.current[0]).toEqual(true);
-    expect(result.current[1]).toEqual("entering");
-
-    // the classnames change to `entered` is queued right away
-    act(() => {
-      jest.runTimersToTime(0);
-    });
-    expect(result.current[0]).toEqual(true);
-    expect(result.current[1]).toEqual("entered");
-
-    // there are no further changes pending
-    act(() => {
-      jest.runAllTimers();
-    });
-    expect(result.current[0]).toEqual(true);
-    expect(result.current[1]).toEqual("entered");
+    expect(result.current[1].className).toEqual("entered");
   });
 
   test("exit transition", () => {
     const { result, rerender } = renderHook(
       (state: boolean) =>
         useTransition(state, {
+          disableInitialEnterTransition: true,
           entering: "entering",
           entered: "entered",
           exiting: "exiting",
@@ -54,67 +45,24 @@ describe("useTransition", () => {
       { initialProps: true }
     );
 
-    // start add being entered
+    // start at being entered
     expect(result.current[0]).toEqual(true);
-    expect(result.current[1]).toEqual("entered");
+    expect(result.current[1].className).toEqual("entered");
 
     // kick off the exit transition by changing the state to `false`
     rerender(false);
 
-    // the state will not change right away, but the classnames update to exiting immediately
+    // the state will not change right away, but the the classname will, which changes to `exiting`
+    // and immediately afterwards to `exited`
+    const previous = result.all[result.all.length - 2] as [boolean, TransitionProps];
+    expect(previous[0]).toEqual(true);
+    expect(previous[1].className).toEqual("exiting");
     expect(result.current[0]).toEqual(true);
-    expect(result.current[1]).toEqual("exiting");
+    expect(result.current[1].className).toEqual("exited");
 
-    // the classnames change to `exited` is queued right away
-    act(() => {
-      jest.runTimersToTime(0);
-    });
-    expect(result.current[0]).toEqual(true);
-    expect(result.current[1]).toEqual("exited");
-
-    // the state will not change until the duration hasn't been passed
-    act(() => {
-      jest.runTimersToTime(100);
-    });
-    expect(result.current[0]).toEqual(true);
-    expect(result.current[1]).toEqual("exited");
-
-    // the state changes after the duration passed
-    act(() => {
-      jest.runTimersToTime(200);
-    });
+    // the state will not change until the the `transitionEnd` event was fired
+    act(() => result.current[1].onTransitionEnd(({} as unknown) as TransitionEvent));
     expect(result.current[0]).toEqual(false);
-    expect(result.current[1]).toEqual("");
-
-    // there are no further changes pending
-    act(() => {
-      jest.runAllTimers();
-    });
-    expect(result.current[0]).toEqual(false);
-    expect(result.current[1]).toEqual("");
-  });
-
-  test("custom duration", () => {
-    const { result, rerender } = renderHook(
-      (state: boolean) =>
-        useTransition(state, {
-          duration: 100,
-          entering: "entering",
-          entered: "entered",
-          exiting: "exiting",
-          exited: "exited"
-        }),
-      { initialProps: true }
-    );
-
-    // kick off the exit transition by changing the state to `false`
-    rerender(false);
-
-    // the state changes after the custom duration passed
-    act(() => {
-      jest.runTimersToTime(100);
-    });
-    expect(result.current[0]).toEqual(false);
-    expect(result.current[1]).toEqual("");
+    expect(result.current[1].className).toEqual("");
   });
 });

@@ -19,7 +19,6 @@ yarn add react-css-transition-hook
 ```ts
 const { isOpen } = useMenu();
 const [showMenu, className] = useTransition(isOpen, {
-  duration: 100,
   entering: "transition ease-out duration-100 transform opacity-0 scale-95",
   entered: "transition ease-out duration-100 transform opacity-100 scale-100",
   exiting: "transition ease-in duration-75 transform opacity-100 scale-100",

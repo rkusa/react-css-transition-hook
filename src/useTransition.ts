@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
+import { TransitionEventHandler, useCallback, useEffect, useLayoutEffect, useState } from "react";
 
 /**
  * Options of the {@link useTransition} hook.
  */
 interface UseTransitionOpts {
   /**
-   * The duration in ms of the CSS exit transition/animation. The actual state change is delayed
-   * until this duration has passed. Defaults to 200ms.
+   * Wether the initial enter transition, when the state starts with `true` (component is visible)
+   * should be disabled/skipped.
    */
-  duration?: number;
+  disableInitialEnterTransition?: boolean;
 
   /**
    * The CSS classnames that should be returned when the enter transition is about to start. During
@@ -49,34 +49,59 @@ interface UseTransitionOpts {
 export default function useTransition(
   actualState: boolean,
   opts: UseTransitionOpts
-): [boolean, string] {
-  const [state, setState] = useState(actualState);
-  const [className, setClassName] = useState<string | undefined>(() =>
-    actualState ? opts.entered : undefined
+): [boolean, TransitionProps] {
+  const [state, setState] = useState(Boolean(actualState && opts.disableInitialEnterTransition));
+  const [step, setStep] = useState<"entering" | "entered" | "exiting" | "exited" | null>(() =>
+    actualState ? "entered" : null
   );
 
-  useEffect(() => {
-    // entering
+  useLayoutEffect(() => {
+    // exited -> entering
     if (!state && actualState) {
       setState(true);
-      setClassName(opts.entering);
+      setStep("entering");
     }
-    // entered
-    else if (state && actualState) {
-      setTimeout(() => setClassName(opts.entered));
-    }
-    // exiting, exited
+    // entered -> exited
     else if (state && !actualState) {
-      setClassName(opts.exiting);
-      setTimeout(() => setClassName(opts.exited));
-      const timeout = setTimeout(() => {
-        setState(false);
-        setClassName(undefined);
-      }, opts.duration ?? 200);
-      return () => clearTimeout(timeout);
+      setStep("exiting");
     }
-    return;
-  }, [state, actualState, opts.entering, opts.entered, opts.exiting, opts.exited]);
+  }, [state, actualState]);
 
-  return [state, className ?? ""];
+  // Once the state changed to true, trigger another re-render for the switch to the entered
+  // classnames
+  useEffect(() => {
+    switch (step) {
+      case "entering":
+        setStep("entered");
+        break;
+      case "exiting":
+        setStep("exited");
+        break;
+    }
+  }, [step]);
+
+  const onTransitionEnd = useCallback(() => {
+    if (!actualState) {
+      setState(false);
+      setStep(null);
+    }
+  }, [actualState]);
+
+  return [state, { className: step ? opts[step] ?? "" : "", onTransitionEnd }];
+}
+
+/**
+ * Properties of the element that should have the transition. It is recommended to spread these
+ * properties into the element.
+ */
+export interface TransitionProps {
+  /**
+   * The classnames that control the transition.
+   */
+  className: string;
+  /**
+   * An event handler for the `transitionEnd` event that is used to detect once a certain transition
+   * is finished.
+   */
+  onTransitionEnd: TransitionEventHandler;
 }
