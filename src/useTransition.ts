@@ -1,4 +1,4 @@
-import { TransitionEventHandler, useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { TransitionEventHandler, useCallback, useEffect, useState } from "react";
 
 /**
  * Options of the {@link useTransition} hook.
@@ -55,7 +55,7 @@ export default function useTransition(
     actualState ? "entered" : null
   );
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     // exited -> entering
     if (!state && actualState) {
       setState(true);
