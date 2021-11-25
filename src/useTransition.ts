@@ -46,7 +46,7 @@ interface UseTransitionOpts {
  * `actualState` once the transition completed, and `className` is the current set of CSS class
  * names used for the transition. The class names are set according to the `opts`.
  */
-export default function useTransition(
+export function useTransition(
   actualState: boolean,
   opts: UseTransitionOpts
 ): [boolean, TransitionProps] {

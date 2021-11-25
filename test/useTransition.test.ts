@@ -1,7 +1,6 @@
 import { TransitionEvent } from "react";
 import { renderHook, act } from "@testing-library/react-hooks";
-import { useTransition } from "../src";
-import { TransitionProps } from "../src/useTransition";
+import { useTransition, TransitionProps } from "../src/useTransition";
 
 describe("useTransition", () => {
   test("enter transition", () => {

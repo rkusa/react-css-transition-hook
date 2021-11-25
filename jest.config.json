@@ -1,0 +1,7 @@
+{
+  "clearMocks": true,
+  "testEnvironment": "jsdom",
+  "transform": {
+    "^.+\\.tsx?$": "esbuild-jest"
+  }
+}
