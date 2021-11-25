@@ -5,7 +5,7 @@ import { TransitionEventHandler, useCallback, useEffect, useState } from "react"
  */
 interface UseTransitionOpts {
   /**
-   * Wether the initial enter transition, when the state starts with `true` (component is visible)
+   * Whether the initial enter transition, when the state starts with `true` (component is visible)
    * should be disabled/skipped.
    */
   disableInitialEnterTransition?: boolean;
@@ -36,6 +36,11 @@ interface UseTransitionOpts {
 }
 
 /**
+ * The step the transition is in.
+ */
+export type TransitionStep = "entering" | "entered" | "exiting" | "exited" | null;
+
+/**
  * Transition between states using CSS classnames. Changing a state to `actualState` is delayed
  * until the transition has been completed.
  *
@@ -49,11 +54,9 @@ interface UseTransitionOpts {
 export function useTransition(
   actualState: boolean,
   opts: UseTransitionOpts
-): [boolean, TransitionProps] {
+): [boolean, TransitionProps, TransitionStep] {
   const [state, setState] = useState(Boolean(actualState && opts.disableInitialEnterTransition));
-  const [step, setStep] = useState<"entering" | "entered" | "exiting" | "exited" | null>(() =>
-    actualState ? "entered" : null
-  );
+  const [step, setStep] = useState<TransitionStep>(() => (actualState ? "entered" : null));
 
   useEffect(() => {
     // exited -> entering
@@ -87,7 +90,7 @@ export function useTransition(
     }
   }, [actualState]);
 
-  return [state, { className: step ? opts[step] ?? "" : "", onTransitionEnd }];
+  return [state, { className: step ? opts[step] ?? "" : "", onTransitionEnd }, step];
 }
 
 /**
