@@ -1,7 +1,7 @@
 {
   "name": "react-css-transition-hook",
   "author": "Markus Ast",
-  "version": "2.0.1-alpha.1",
+  "version": "2.1.0",
   "license": "MIT",
   "description": "Minimal, zero-dependency React hook to CSS class name based transitions.",
   "keywords": [
