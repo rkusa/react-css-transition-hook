@@ -44,53 +44,62 @@ export type TransitionStep = "entering" | "entered" | "exiting" | "exited" | nul
  * Transition between states using CSS classnames. Changing a state to `actualState` is delayed
  * until the transition has been completed.
  *
- * @param actualState - the actual state the hook should transition to
+ * @param desiredState - the desired state the hook should transition to
  * @param opts - a set of options controlling the transition
  *
- * @returns a pair of `[state, className]`, where `state` is the current state that is changed to
- * `actualState` once the transition completed, and `className` is the current set of CSS class
- * names used for the transition. The class names are set according to the `opts`.
+ * @returns a pair of `[currentState, className, transition]`, where `currentState` is the current
+ * state that is changed to `desiredState` once the transition completed, `className` is the current
+ * set of CSS class names used for the transition, and `transition` is the name of the transition
+ * the hook is currently in. The class names are set according to the `opts`.
  */
 export function useTransition(
-  actualState: boolean,
+  desiredState: boolean,
   opts: UseTransitionOpts
 ): [boolean, TransitionProps, TransitionStep] {
-  const [state, setState] = useState(Boolean(actualState && opts.disableInitialEnterTransition));
-  const [step, setStep] = useState<TransitionStep>(() => (actualState ? "entered" : null));
+  const [currentState, setCurrentState] = useState(
+    Boolean(desiredState && opts.disableInitialEnterTransition)
+  );
+  const [transition, setTransition] = useState<TransitionStep>(() =>
+    desiredState ? "entered" : null
+  );
 
   useEffect(() => {
     // exited -> entering
-    if (!state && actualState) {
-      setState(true);
-      setStep("entering");
+    if (!currentState && desiredState) {
+      setCurrentState(true);
+      setTransition("entering");
     }
     // entered -> exited
-    else if (state && !actualState) {
-      setStep("exiting");
+    else if (currentState && !desiredState) {
+      setTransition("exiting");
     }
-  }, [state, actualState]);
+  }, [currentState, desiredState]);
 
   // Once the state changed to true, trigger another re-render for the switch to the entered
   // classnames
   useEffect(() => {
-    switch (step) {
+    switch (transition) {
       case "entering":
-        setStep("entered");
+        setTransition("entered");
         break;
       case "exiting":
-        setStep("exited");
+        setTransition("exited");
         break;
     }
-  }, [step]);
+  }, [transition]);
 
   const onTransitionEnd = useCallback(() => {
-    if (!actualState) {
-      setState(false);
-      setStep(null);
+    if (!desiredState) {
+      setCurrentState(false);
+      setTransition(null);
     }
-  }, [actualState]);
+  }, [desiredState]);
 
-  return [state, { className: step ? opts[step] ?? "" : "", onTransitionEnd }, step];
+  return [
+    currentState,
+    { className: transition ? opts[transition] ?? "" : "", onTransitionEnd },
+    transition,
+  ];
 }
 
 /**
