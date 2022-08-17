@@ -68,25 +68,14 @@ export function useTransition(
     if (!currentState && desiredState) {
       setCurrentState(true);
       setTransition("entering");
+      runAfterFramePaint(() => setTransition("entered"));
     }
     // entered -> exited
     else if (currentState && !desiredState) {
       setTransition("exiting");
+      runAfterFramePaint(() => setTransition("exited"));
     }
   }, [currentState, desiredState]);
-
-  // Once the state changed to true, trigger another re-render for the switch to the entered
-  // classnames
-  useEffect(() => {
-    switch (transition) {
-      case "entering":
-        setTransition("entered");
-        break;
-      case "exiting":
-        setTransition("exited");
-        break;
-    }
-  }, [transition]);
 
   const onTransitionEnd = useCallback(() => {
     if (!desiredState) {
@@ -116,4 +105,12 @@ export interface TransitionProps {
    * is finished.
    */
   onTransitionEnd: TransitionEventHandler;
+}
+
+function runAfterFramePaint(callback: () => void) {
+  requestAnimationFrame(() => {
+    const messageChannel = new MessageChannel();
+    messageChannel.port1.onmessage = callback;
+    messageChannel.port2.postMessage(undefined);
+  });
 }
